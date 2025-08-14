@@ -1,0 +1,113 @@
+<h1>通学路危険MAP</h1>
+
+<h2>gmap</h2>
+
+<input id="address" type="textbox" value="GeekSalon">
+<input type="button" value="Encode" onclick="codeAddress()">
+<div id="display">何かが表示される、、、、！</div>
+
+<div id='map'></div>
+
+<style>
+#map {
+  height: 600px;
+  width: 600px;
+}
+</style>
+
+<script>
+    function initMap() {
+    //初期表示位置
+      let latlng = new google.maps.LatLng(36.33998499840244, 138.99091007153316);
+      //デザイン
+      let styles = [
+           {
+            stylers: [
+             { "saturation": 0 },
+             { "lightness": 0 }
+            ]
+           }
+          ];
+
+      let map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 5.5,
+          styles: styles,
+          center: latlng
+      });
+      let transitLayer = new google.maps.TransitLayer();
+      transitLayer.setMap(map);
+
+        <% @tweet.each do |t| %>
+        ( function() { 
+         let markerLatLng = { lat: <%= t.lat %>, lng: <%= t.lng %> }; 
+        
+        let marker = new google.maps.Marker({ 
+        position: markerLatLng, 
+        map: map 
+//マーカーをクリックしたとき、詳細情報を表示
+          let infowindow = new google.maps.InfoWindow({
+            position: markerLatLng,
+            content: "<a href='<%= tweet_url(t.id) %>' target='_blank'></a>"
+          }); //ここで詳細ページへのリンクを表示させる
+          marker.addListener('click', function() {
+            infowindow.open(map, marker);
+          });
+    })();
+   <% end %>
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBuX6sKPiMZ2DdDvI24w_PfSgZeAPxnrxA&callback=initMap" async defer></script>
+
+<%= stylesheet_link_tag 'index', :media => "all" %>
+
+<div class="tweets-container">
+<h3>一覧ページ</h3>
+<%= link_to "新規投稿へ", new_tweet_path %>
+  <% @tweet.each do |t| %>
+    <div class="tweet">
+     <div class="main-box">
+      <div class="left-container"><%= t.body %></div>
+      <div class="right-container">
+      <%= t.user.email %>
+    
+      <%= image_tag t.image_url, size: "250x200" if t.image? %>
+
+      <%= t.created_at %>
+      <%= t.name %>
+      <%= t.gunma %>
+      
+      <% if user_signed_in? %>
+      <% if current_user.already_liked?(t) %>
+          <%= link_to tweet_like_path(id: t.id, tweet_id: t.id), method: :delete do %>
+          <i class="fas fa-heart" style="color:red;"></i><%= t.likes.count %>
+      <% end %>
+
+      <% else %>
+          <%= link_to tweet_likes_path(id: t.id, tweet_id: t.id), method: :post do %>
+              <i class="far fa-heart" style="color:red;"></i><%= t.likes.count %>
+          <% end %>
+      <% end %>
+
+      <% else %>
+      <i class="far fa-heart" style="color:red;"></i><%= t.likes.count %>
+      <% end %>
+      
+      <%= t.point %>
+      <%= link_to "詳細へ", tweet_path(t.id) %> 
+      <%= button_to "削除する", tweet_path(t.id), method: :delete %>
+    </div>
+  <% end %>
+</div>
+      <%= form_tag({controller:"tweets",action:"index"}, method: :get) do %>
+        <% Tag.all.each do |t| %>
+          <li><%= check_box :tag_ids, t.name %><%= t.name %></li>
+        <% end %>
+       <% end %>
+ <%= submit_tag '検索' %>
+
+<%= form_tag({controller:"tweets",action:"index"}, method: :get) do %>
+    <%= text_field_tag :tag %>
+    <%= submit_tag 'タグを追加' %>
+
+<% end %>
+
+

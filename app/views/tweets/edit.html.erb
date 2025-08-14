@@ -1,0 +1,127 @@
+<%= stylesheet_link_tag 'edit', :media => "all" %>
+
+<div class="post-container">
+<p class="title">投稿編集ページ</post>
+<%= form_for(@tweet, :url => { controller:'tweets', action:'edit'}) do |f| %>
+    <%= f.label :投稿内容 %>
+        <br>
+        <%= f.text_field :body,size: 140%>
+        <br>
+  <div class="field">
+    <%= f.label :分類  %>
+    <%= f.select :gunma, 
+    [["車", "車"], 
+    ["自転車", "自転車"], 
+    ["歩行者", "歩行者"]], include_blank: "選択して下さい" %>
+  </div>
+
+  <div class="field">
+    <%= f.label :image %>
+    <%= f.file_field :image %>
+  </div>
+
+  <div class="field">
+    <%= f.label :補足説明  %>
+    <%= f.text_area :point, :size => "30x2" %>
+  </div>
+
+    <div class='form-group'>
+        <%= f.collection_check_boxes(:tag_ids, Tag.all, :id, :name) do |tag| %>
+            <div class='form-check'>
+                <%= tag.label class: 'form-check-label' do %>
+                    <%= tag.check_box class: 'form-check-input' %>
+                    <%= tag.text %>
+                <% end %>
+            </div>
+        <% end %>
+    </div>
+
+
+
+<%= form_with(model: @tweet, local: true) do |f| %>
+  <div class="actions">
+    <%= f.label :body,"内容" %>
+    <%= f.text_field :body %>
+    <%= f.label :lat,"緯度" %>
+    <%= f.text_field :lat,:value =>"緯度", id: :lat %>
+    <%= f.label :lng,"経度" %>
+    <%= f.text_field :lng,:value =>"経度", id: :lng %>
+    <%= f.submit %>
+  </div>
+<% end %>
+  
+<h2>Map</h2>
+
+<input id="address" type="textbox" value="GeekSalon">
+<input type="button" value="検索" onclick="codeAddress()">
+<p>マーカーをドラック＆ドロップで位置の調整ができます。<p>
+<div id='map'></div>
+
+<style>
+#map {
+  height: 600px;
+  width: 600px;
+}
+</style>
+
+<script>
+let map
+let marker
+function initMap(){
+
+  geocoder = new google.maps.Geocoder()
+
+  map = new google.maps.Map(document.getElementById('map'), {
+    center:  {lat: 36.345813969592186, lng:138.97702695767177l},  //高崎経済大学
+    zoom: 13,
+    
+  });
+}
+
+let geocoder
+let aft
+function codeAddress(){
+  let inputAddress = document.getElementById('address').value;
+  geocoder.geocode( { 'address': inputAddress}, function(results, status) {
+    if (status == 'OK') {
+      
+        if (aft == true){
+            marker.setMap(null);
+        }
+
+      
+        map.setCenter(results[0].geometry.location);
+            marker = new google.maps.Marker({
+            map: map,
+            position: results[0].geometry.location,
+            draggable: true
+        });
+
+        aft = true
+
+        //検索した時に緯度経度を入力する
+        document.getElementById('lat').value = results[0].geometry.location.lat();
+        document.getElementById('lng').value = results[0].geometry.location.lng();
+
+        // マーカーのドロップ（ドラッグ終了）時のイベント
+        google.maps.event.addListener( marker, 'dragend', function(ev){
+            // イベントの引数evの、プロパティ.latLngが緯度経度
+            document.getElementById('lat').value = ev.latLng.lat();
+            document.getElementById('lng').value = ev.latLng.lng();
+        });
+    } else {
+      alert('該当する結果がありませんでした：' + status);
+    }
+  });   
+}
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBuX6sKPiMZ2DdDvI24w_PfSgZeAPxnrxA&callback=initMap" async defer></script>
+
+<%= f.submit "編集する" %>
+<% end %>
+
+<%= link_to "Mapに戻る", tweets_path %>
+<br>
+<% end %>
+</div>
